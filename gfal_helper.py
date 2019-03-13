@@ -11,6 +11,7 @@ import os
 import string
 import subprocess as sp
 import sys
+import config
 
 default_user = config.default_user
 file_count_reprint_no = config.file_count_reprint_no
@@ -39,7 +40,7 @@ class DPMFile():
             self.is_dir = True
         else:
             self.is_dir = False
-    
+
 
     def return_line_as_str(self, args):
         ln = self.__split
@@ -52,7 +53,7 @@ class DPMFile():
 
 
         retstr = ""
-        
+
         if args.verbose:
             retstr += "{0} {1} {2:15}".format(self.month, self.day,
                                            self.time)
@@ -260,7 +261,7 @@ def sort_files(files, args):
         return files
     else:
         if args.sortkey is not None:
-            sortattr = args.sortkey 
+            sortattr = args.sortkey
         else:
             sortattr = "fname"
         files.sort(key=lambda f : getattr(f,sortattr), reverse = args.reverse)
@@ -274,7 +275,7 @@ def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None
         for f in files:
             if f.is_dir:
                 if not is_excluded(f, args):
-                    parse_directory(os.path.join(DPMdirectory, f.fname), recursive=recursive, 
+                    parse_directory(os.path.join(DPMdirectory, f.fname), recursive=recursive,
                                     bare=bare, exclude_dirs=exclude_dirs)
 
     files = sort_files(files, args)
@@ -347,12 +348,12 @@ if __name__ == "__main__":
         do_copy_to_grid(args)
 
     elif args.directories == []:
-        parse_directory("", recursive = args.recursive, bare=args.bare, 
+        parse_directory("", recursive = args.recursive, bare=args.bare,
                         exclude_dirs = args.exclude)
     else:
         if not args.move:
             for DPMdirectory in args.directories:
-                parse_directory(DPMdirectory, recursive = args.recursive, 
+                parse_directory(DPMdirectory, recursive = args.recursive,
                                 bare=args.bare, exclude_dirs=args.exclude)
         else:
             for DPMdirectory in args.directories[:1]:
