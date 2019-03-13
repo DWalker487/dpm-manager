@@ -12,11 +12,13 @@ import string
 import subprocess as sp
 import sys
 
-user = os.environ["USER"]
-file_count_reprint_no = 15
-DPM = "gsiftp://se01.dur.scotgrid.ac.uk/dpm/dur.scotgrid.ac.uk/home/pheno/{0}/"
-dir_colour = 33
-exe_colour = 34
+default_user = config.default_user
+file_count_reprint_no = config.file_count_reprint_no
+DPM = config.DPM
+dir_colour = config.dir_colour
+exe_colour = config.exe_colour
+use_fnmatch = config.use_fnmatch
+
 
 def _wrap_str(string, colour):
     return "\033[{1}m{0}\033[0m".format(string, colour)
@@ -48,19 +50,16 @@ class DPMFile():
             elif "x" in self.permissions:
                 self.fname_print = _wrap_str(self.fname, exe_colour)
 
-        if os.environ["USER"]=="mheil":
-            retstr = ""
-        else:
-            retstr = "{0:50} ".format(self.fname_print)
 
+        retstr = ""
+        
         if args.verbose:
             retstr += "{0} {1} {2:15}".format(self.month, self.day,
                                            self.time)
         if args.permissions:
             retstr += " {0:10} ".format(self.permissions)
 
-        if os.environ["USER"]=="mheil":
-            retstr += "{0:50}".format(self.fname_print)
+        retstr += "{0:50}".format(self.fname_print)
 
         if args.bare:
             retstr = " ".join(retstr.split())
@@ -138,7 +137,7 @@ def move_to_dir(infile, args, file_no, no_files):
 
 def _search_match(search_str, fileobj, args):
     if args.wildcards:
-        if os.environ["USER"].strip() != "mheil":
+        if use_fnmatch:
             return fnmatch.fnmatch(search_str, fileobj.fname)
         try:
             if re.search(search_str, fileobj.fname) is not None:
@@ -247,17 +246,13 @@ def print_files(files, args):
 
 
 def print_bare_files(files, args, dir):
-    if user=="mheil":
-        # TODO make this more elegant
-        printstr = []
-        for i in files:
-            if not i.is_dir:
-                ret = i.return_line_as_str(args).split()
-                printstr.append(" ".join(ret[:-1]+[os.path.join(dir, ret[-1])]))
-        print("\n".join(printstr))
-    else:
-        print("\n".join(os.path.join(dir, i.return_line_as_str(args)) 
-                        for i in files if not i.is_dir))
+    # TODO make this more elegant
+    printstr = []
+    for i in files:
+        if not i.is_dir:
+            ret = i.return_line_as_str(args).split()
+            printstr.append(" ".join(ret[:-1]+[os.path.join(dir, ret[-1])]))
+    print("\n".join(printstr))
 
 
 def sort_files(files, args):
@@ -343,7 +338,7 @@ if __name__ == "__main__":
     if args.user:
         DPM = DPM.format(args.user)
     else:
-        DPM = DPM.format(user)
+        DPM = DPM.format(default_user)
 
     if args.time:
         start_time = datetime.datetime.now()
