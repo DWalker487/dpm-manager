@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import print_function
+import config
 import datetime
 import fnmatch
 import itertools
 import lscp_args
 import multiprocessing as mp
+import os
 import re
 import sre_constants
-import os
 import string
 import subprocess as sp
 import sys
@@ -145,7 +146,7 @@ def _search_match(search_str, fileobj, args):
             else:
                 return False
         except sre_constants.error:
-            print(_wrap_str("Invalid regexp entered. Don't be so fucking stupid.", 31))
+            print(_wrap_str("Invalid regexp entered. Don't be silly.", 31))
             sys.exit(-1)
     else:
         if args.case_insensitive:
