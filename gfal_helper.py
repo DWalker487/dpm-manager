@@ -12,7 +12,7 @@ import sre_constants
 import string
 import subprocess as sp
 import sys
-import config
+
 
 default_user = config.default_user
 file_count_reprint_no = config.file_count_reprint_no
