@@ -15,7 +15,13 @@ import config
 
 default_user = config.default_user
 file_count_reprint_no = config.file_count_reprint_no
-DPM = config.DPM
+pcol_def = config.protocol_default
+pcol_ls = config.protocol_list
+pcol_rm = config.protocol_delete
+pcol_down = config.protocol_download
+pcol_up = config.protocol_upload
+pcol_mv = config.protocol_move
+DPM = pcol_def+config.DPM
 dir_colour = config.dir_colour
 exe_colour = config.exe_colour
 use_fnmatch = config.use_fnmatch
@@ -96,7 +102,7 @@ def get_usable_threads(no_threads, no_files):
 def copy_file_to_grid(infile, griddir, file_no, no_files):
     infile_loc, infile_name = os.path.split(infile)
     infile = os.path.join(os.getcwd(), infile)
-    lcgname = os.path.join(DPM.replace("gsiftp", "srm"), griddir, infile_name)
+    lcgname = os.path.join(DPM.replace(pcol_def, pcol_up, 1), griddir, infile_name)
     filename = "file://{0}".format(infile)
     print("Copying {1} to {0} [{2}/{3}]".format(filename, lcgname,
                                                 file_no+1, no_files))
@@ -104,7 +110,7 @@ def copy_file_to_grid(infile, griddir, file_no, no_files):
 
 
 def delete_file_from_grid(xfile, file_no, no_files):
-    lcgname = xfile.full_name().replace("gsiftp", "srm")
+    lcgname = xfile.full_name().replace(pcol_def, pcol_rm, 1)
     print("Deleting {0} [{1}/{2}]".format(lcgname, file_no+1, no_files))
 
     if xfile.is_dir:
@@ -118,7 +124,7 @@ def copy_DPM_file_to_local(DPMfile, localfile):
 
 
 def copy_to_dir(infile, args, file_no, no_files):
-    lcgname = infile.full_name().replace("gsiftp", "srm")
+    lcgname = infile.full_name().replace(pcol_def, pcol_down, 1)
     if args.output_directory is not None:
         xfile = os.path.join(args.output_directory, infile.fname)
     else:
@@ -130,8 +136,8 @@ def copy_to_dir(infile, args, file_no, no_files):
 
 def move_to_dir(infile, args, file_no, no_files):
     _from, _to = args.directories
-    oldlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", "srm"), _from, infile.fname)
-    newlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", "srm"), _to, infile.fname)
+    oldlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _from, infile.fname)
+    newlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _to, infile.fname)
 
     infile_dir = os.path.join(_from, infile.fname)
     outfile_dir = os.path.join(_to, infile.fname)
@@ -240,10 +246,15 @@ def get_unique_runcards(files):
 def lfc_ls_obj_wrapper(*args):
     if len(args) == 0:
         args = [""]
-    args = ["{0}{1}".format(DPM.replace("gsiftp","dav"), i) for i in args]
-    args += ["-l", "-H"]
-    files = bash_call("gfal-ls", *args)
-    return [DPMFile(x, args[0]) for x in files]
+    ret_files = []
+    for folder in args:
+        cmd_args = ["{0}{1}".format(DPM.replace(pcol_def, pcol_ls, 1), folder)]
+        cmd_args += ["-l", "-H"]
+        files = bash_call("gfal-ls", *cmd_args)
+        ret_files += [
+            DPMFile( x.replace(pcol_ls, pcol_def, 1), cmd_args[0].replace(pcol_ls, pcol_def, 1))
+            for x in files ]
+    return ret_files
 
 
 def print_files(files, args):
