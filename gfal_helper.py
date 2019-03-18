@@ -103,8 +103,8 @@ def copy_file_to_grid(infile, griddir, file_no, no_files):
     bash_call("gfal-copy", filename, lcgname)
 
 
-def delete_file_from_grid(xfile, DPMdirectory, file_no, no_files):
-    lcgname = os.path.join(DPM.replace("gsiftp", "srm"), DPMdirectory, xfile.fname)
+def delete_file_from_grid(xfile, file_no, no_files):
+    lcgname = xfile.full_name().replace("gsiftp", "srm")
     print("Deleting {0} [{1}/{2}]".format(lcgname, file_no+1, no_files))
 
     if xfile.is_dir:
@@ -220,7 +220,6 @@ def do_delete(DPMdirectory, files, args):
         print("> Deleting files...")
         pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
         pool.starmap(delete_file_from_grid, zip(files,
-                                                itertools.repeat(DPMdirectory),
                                                 range(len(files)),
                                                 itertools.repeat(no_files)),
                      chunksize=1)
@@ -241,7 +240,7 @@ def get_unique_runcards(files):
 def lfc_ls_obj_wrapper(*args):
     if len(args) == 0:
         args = [""]
-    args = ["{0}/{1}".format(DPM.replace("gsiftp","dav"), i) for i in args]
+    args = ["{0}{1}".format(DPM.replace("gsiftp","dav"), i) for i in args]
     args += ["-l", "-H"]
     files = bash_call("gfal-ls", *args)
     return [DPMFile(x, args[0]) for x in files]
