@@ -31,7 +31,11 @@ class DPMFile():
         self.fname = line.strip()
         self.__split = [x.strip() for x in line.split()]
         self.fname = self.__split[-1]
-        self.fname_print = self.__split[-1]
+        if self.directory == self.fname:
+            self.fname = os.path.basename(self.fname)
+            self.directory = os.path.dirname(self.directory)
+        self.fname_print = self.fname
+
         self.time = self.__split[-2]
         self.month = self.__split[-4]
         self.day = self.__split[-3]
@@ -40,6 +44,9 @@ class DPMFile():
             self.is_dir = True
         else:
             self.is_dir = False
+
+    def full_name(self):
+        return os.path.join(self.directory, self.fname)
 
 
     def return_line_as_str(self, args):
@@ -110,9 +117,8 @@ def copy_DPM_file_to_local(DPMfile, localfile):
     bash_call("gfal-copy", DPMfile, localfile)
 
 
-def copy_to_dir(infile, directory, args, file_no, no_files):
-    lcgname = os.path.join(DPM.replace("gsiftp", "srm"), directory, infile.fname5B)
-    # lcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", "srm"), directory, infile.fname)
+def copy_to_dir(infile, args, file_no, no_files):
+    lcgname = infile.full_name().replace("gsiftp", "srm")
     if args.output_directory is not None:
         xfile = os.path.join(args.output_directory, infile.fname)
     else:
@@ -183,8 +189,7 @@ def do_copy(DPMdirectory, args, files):
     print("> Copying {0} file{1}...".format(no_files,
                                             ("" if no_files == 1 else "s")))
     pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
-    pool.starmap(copy_to_dir, zip(files, itertools.repeat(DPMdirectory),
-                                  itertools.repeat(args),
+    pool.starmap(copy_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
                                   itertools.repeat(no_files)), chunksize=1)
 
