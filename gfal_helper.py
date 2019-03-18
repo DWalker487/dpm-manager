@@ -331,7 +331,7 @@ def do_copy_to_grid(args):
     if args.output_directory is not None:
         output = args.output_directory
     else:
-        print("No output directory specified. Exiting...")
+        print("Please specify an output directory with -o.")
         return
     no_files = len(args.copy_to_grid)
     for file_no, xfile in enumerate(args.copy_to_grid):
