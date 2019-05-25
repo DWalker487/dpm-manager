@@ -16,7 +16,13 @@ import sys
 
 default_user = config.default_user
 file_count_reprint_no = config.file_count_reprint_no
-DPM = config.DPM
+pcol_def = config.protocol_default
+pcol_ls = config.protocol_list
+pcol_rm = config.protocol_delete
+pcol_down = config.protocol_download
+pcol_up = config.protocol_upload
+pcol_mv = config.protocol_move
+DPM = pcol_def+config.DPM
 dir_colour = config.dir_colour
 exe_colour = config.exe_colour
 use_fnmatch = config.use_fnmatch
@@ -32,7 +38,11 @@ class DPMFile():
         self.fname = line.strip()
         self.__split = [x.strip() for x in line.split()]
         self.fname = self.__split[-1]
-        self.fname_print = self.__split[-1]
+        if self.directory == self.fname:
+            self.fname = os.path.basename(self.fname)
+            self.directory = os.path.dirname(self.directory)
+        self.fname_print = self.fname
+
         self.time = self.__split[-2]
         self.month = self.__split[-4]
         self.day = self.__split[-3]
@@ -41,6 +51,9 @@ class DPMFile():
             self.is_dir = True
         else:
             self.is_dir = False
+
+    def full_name(self):
+        return os.path.join(self.directory, self.fname)
 
 
     def return_line_as_str(self, args):
@@ -90,15 +103,24 @@ def get_usable_threads(no_threads, no_files):
 def copy_file_to_grid(infile, griddir, file_no, no_files):
     infile_loc, infile_name = os.path.split(infile)
     infile = os.path.join(os.getcwd(), infile)
+<<<<<<< HEAD
     lcgname = os.path.join(DPM.replace("gsiftp", protocol), griddir, infile_name)
+=======
+    lcgname = os.path.join(DPM.replace(pcol_def, pcol_up, 1), griddir, infile_name)
+>>>>>>> 53739cdfd8522b40af78c3131fee90435841dadf
     filename = "file://{0}".format(infile)
     print("Copying {1} to {0} [{2}/{3}]".format(filename, lcgname,
                                                 file_no+1, no_files))
     bash_call("gfal-copy", filename, lcgname)
 
 
+<<<<<<< HEAD
 def delete_file_from_grid(xfile, DPMdirectory, file_no, no_files):
     lcgname = os.path.join(DPM.replace("gsiftp", protocol), DPMdirectory, xfile.fname)
+=======
+def delete_file_from_grid(xfile, file_no, no_files):
+    lcgname = xfile.full_name().replace(pcol_def, pcol_rm, 1)
+>>>>>>> 53739cdfd8522b40af78c3131fee90435841dadf
     print("Deleting {0} [{1}/{2}]".format(lcgname, file_no+1, no_files))
 
     if xfile.is_dir:
@@ -111,9 +133,14 @@ def copy_DPM_file_to_local(DPMfile, localfile):
     bash_call("gfal-copy", DPMfile, localfile)
 
 
+<<<<<<< HEAD
 def copy_to_dir(infile, directory, args, file_no, no_files):
     lcgname = os.path.join(DPM.replace("gsiftp", protocol), directory, infile.fname)
     # lcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", protocol), directory, infile.fname)
+=======
+def copy_to_dir(infile, args, file_no, no_files):
+    lcgname = infile.full_name().replace(pcol_def, pcol_down, 1)
+>>>>>>> 53739cdfd8522b40af78c3131fee90435841dadf
     if args.output_directory is not None:
         xfile = os.path.join(args.output_directory, infile.fname)
     else:
@@ -125,8 +152,13 @@ def copy_to_dir(infile, directory, args, file_no, no_files):
 
 def move_to_dir(infile, args, file_no, no_files):
     _from, _to = args.directories
+<<<<<<< HEAD
     oldlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", protocol), _from, infile.fname)
     newlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", protocol), _to, infile.fname)
+=======
+    oldlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _from, infile.fname)
+    newlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _to, infile.fname)
+>>>>>>> 53739cdfd8522b40af78c3131fee90435841dadf
 
     infile_dir = os.path.join(_from, infile.fname)
     outfile_dir = os.path.join(_to, infile.fname)
@@ -135,6 +167,9 @@ def move_to_dir(infile, args, file_no, no_files):
 
     bash_call("gfal-rename", oldlcgname, newlcgname)
 
+
+def create_dir(directory):
+    bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM, directory ))
 
 
 def _search_match(search_str, fileobj, args):
@@ -184,8 +219,7 @@ def do_copy(DPMdirectory, args, files):
     print("> Copying {0} file{1}...".format(no_files,
                                             ("" if no_files == 1 else "s")))
     pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
-    pool.starmap(copy_to_dir, zip(files, itertools.repeat(DPMdirectory),
-                                  itertools.repeat(args),
+    pool.starmap(copy_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
                                   itertools.repeat(no_files)), chunksize=1)
 
@@ -199,6 +233,7 @@ def do_move(DPMdirectory, args, files):
     no_files = len(files)
     print("> Moving {0} file{1}...".format(no_files,
                                             ("" if no_files == 1 else "s")))
+    create_dir(args.directories[1])
     pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
     pool.starmap(move_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
@@ -216,7 +251,6 @@ def do_delete(DPMdirectory, files, args):
         print("> Deleting files...")
         pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
         pool.starmap(delete_file_from_grid, zip(files,
-                                                itertools.repeat(DPMdirectory),
                                                 range(len(files)),
                                                 itertools.repeat(no_files)),
                      chunksize=1)
@@ -237,10 +271,15 @@ def get_unique_runcards(files):
 def lfc_ls_obj_wrapper(*args):
     if len(args) == 0:
         args = [""]
-    args = ["{0}/{1}".format(DPM.replace("gsiftp","dav"), i) for i in args]
-    args += ["-l", "-H"]
-    files = bash_call("gfal-ls", *args)
-    return [DPMFile(x, args[0]) for x in files]
+    ret_files = []
+    for folder in args:
+        cmd_args = ["{0}{1}".format(DPM.replace(pcol_def, pcol_ls, 1), folder)]
+        cmd_args += ["-l", "-H"]
+        files = bash_call("gfal-ls", *cmd_args)
+        ret_files += [
+            DPMFile( x.replace(pcol_ls, pcol_def, 1), cmd_args[0].replace(pcol_ls, pcol_def, 1))
+            for x in files ]
+    return ret_files
 
 
 def print_files(files, args):
@@ -334,7 +373,7 @@ def do_copy_to_grid(args):
     if args.output_directory is not None:
         output = args.output_directory
     else:
-        print("No output directory specified. Exiting...")
+        print("Please specify an output directory with -o.")
         return
     no_files = len(args.copy_to_grid)
     for file_no, xfile in enumerate(args.copy_to_grid):
