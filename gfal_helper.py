@@ -294,7 +294,7 @@ def sort_files(files, args):
 
 def make_directory(args):
     for directory in args.directories:
-        lcgname = os.path.join(DPM.replace("gsiftp", protocol), directory)
+        lcgname = os.path.join(DPM.replace("gsiftp", config.protocol_default), directory)
         bash_call("gfal-mkdir", lcgname)
 
 
