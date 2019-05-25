@@ -106,7 +106,7 @@ def copy_file_to_grid(infile, griddir, file_no, no_files):
     lcgname = os.path.join(DPM.replace(pcol_def, pcol_up, 1), griddir, infile_name)
 
     filename = "file://{0}".format(infile)
-    print("Copying {1} to {0} [{2}/{3}]".format(filename, lcgname,
+    print("Copying {0} to {1} [{2}/{3}]".format(filename, lcgname,
                                                 file_no+1, no_files))
     bash_call("gfal-copy", filename, lcgname)
 
