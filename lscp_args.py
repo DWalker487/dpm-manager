@@ -33,6 +33,12 @@ def get_args():
         action="store_true",
         default=False)
     parser.add_argument(
+        "--mkdir",
+        "-mkdir",
+        help="Make directory",
+        action="store_true",
+        default=False)
+    parser.add_argument(
         "--recursive",
         "-rc",
         help="recursive search",

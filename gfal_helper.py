@@ -20,7 +20,7 @@ DPM = config.DPM
 dir_colour = config.dir_colour
 exe_colour = config.exe_colour
 use_fnmatch = config.use_fnmatch
-
+protocol = config.protocol
 
 def _wrap_str(string, colour):
     return "\033[{1}m{0}\033[0m".format(string, colour)
@@ -90,7 +90,7 @@ def get_usable_threads(no_threads, no_files):
 def copy_file_to_grid(infile, griddir, file_no, no_files):
     infile_loc, infile_name = os.path.split(infile)
     infile = os.path.join(os.getcwd(), infile)
-    lcgname = os.path.join(DPM.replace("gsiftp", "srm"), griddir, infile_name)
+    lcgname = os.path.join(DPM.replace("gsiftp", protocol), griddir, infile_name)
     filename = "file://{0}".format(infile)
     print("Copying {1} to {0} [{2}/{3}]".format(filename, lcgname,
                                                 file_no+1, no_files))
@@ -98,7 +98,7 @@ def copy_file_to_grid(infile, griddir, file_no, no_files):
 
 
 def delete_file_from_grid(xfile, DPMdirectory, file_no, no_files):
-    lcgname = os.path.join(DPM.replace("gsiftp", "srm"), DPMdirectory, xfile.fname)
+    lcgname = os.path.join(DPM.replace("gsiftp", protocol), DPMdirectory, xfile.fname)
     print("Deleting {0} [{1}/{2}]".format(lcgname, file_no+1, no_files))
 
     if xfile.is_dir:
@@ -112,8 +112,8 @@ def copy_DPM_file_to_local(DPMfile, localfile):
 
 
 def copy_to_dir(infile, directory, args, file_no, no_files):
-    lcgname = os.path.join(DPM.replace("gsiftp", "srm"), directory, infile.fname5B)
-    # lcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", "srm"), directory, infile.fname)
+    lcgname = os.path.join(DPM.replace("gsiftp", protocol), directory, infile.fname)
+    # lcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", protocol), directory, infile.fname)
     if args.output_directory is not None:
         xfile = os.path.join(args.output_directory, infile.fname)
     else:
@@ -125,8 +125,8 @@ def copy_to_dir(infile, directory, args, file_no, no_files):
 
 def move_to_dir(infile, args, file_no, no_files):
     _from, _to = args.directories
-    oldlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", "srm"), _from, infile.fname)
-    newlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", "srm"), _to, infile.fname)
+    oldlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", protocol), _from, infile.fname)
+    newlcgname = "{0}{1}/{2}".format(DPM.replace("gsiftp", protocol), _to, infile.fname)
 
     infile_dir = os.path.join(_from, infile.fname)
     outfile_dir = os.path.join(_to, infile.fname)
@@ -269,6 +269,12 @@ def sort_files(files, args):
         return files
 
 
+def make_directory(args):
+    for directory in args.directories:
+        lcgname = os.path.join(DPM.replace("gsiftp", protocol), directory)
+        bash_call("gfal-mkdir", lcgname)
+
+
 def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None):
     files = lfc_ls_obj_wrapper(DPMdirectory)
 
@@ -344,6 +350,10 @@ if __name__ == "__main__":
 
     if args.time:
         start_time = datetime.datetime.now()
+
+    if args.mkdir:
+        make_directory(args)
+        sys.exit(0)
 
     if args.copy_to_grid is not None:
         do_copy_to_grid(args)
