@@ -21,6 +21,7 @@ pcol_rm = config.protocol_delete
 pcol_down = config.protocol_download
 pcol_up = config.protocol_upload
 pcol_mv = config.protocol_move
+pcol_mkdir = config.protocol_mkdir
 DPM = pcol_def+config.DPM
 dir_colour = config.dir_colour
 exe_colour = config.exe_colour
@@ -140,7 +141,7 @@ def move_to_dir(infile, args, file_no, no_files):
     bash_call("gfal-rename", oldlcgname, newlcgname)
 
 def create_dir(directory):
-    bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM, directory ))
+    bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM.replace(pcol_def, pcol_mkdir, 1), directory ))
 
 def _search_match(search_str, fileobj, args):
     if args.wildcards:
@@ -267,8 +268,7 @@ def sort_files(files, args):
 
 def make_directory(args):
     for directory in args.directories:
-        lcgname = os.path.join(DPM.replace("gsiftp", config.protocol_default), directory)
-        bash_call("gfal-mkdir", lcgname)
+        create_dir(directory)
 
 def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None):
     files = lfc_ls_obj_wrapper(DPMdirectory)
