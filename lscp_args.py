@@ -50,19 +50,19 @@ def get_args():
         help="exclude directories matching the string from recursion. Works with wildcard flag if enabled",
         nargs="+", default=None)
     parser.add_argument(
-        "--delete", 
-        "-d", 
-        "-rm", 
+        "--delete",
+        "-d",
+        "-rm",
         help="Delete selected files",
         action="store_true", default=False)
     parser.add_argument(
-        "--long", 
-        "-l", 
+        "--long",
+        "-l",
         help="long mode because Marian is too lazy to type -vp",
         action="store_true", default=False)
     parser.add_argument(
-        "--bare", 
-        "-b", 
+        "--bare",
+        "-b",
         help="bare output, when you want full filepath info",
         action="store_true", default=False)
     parser.add_argument(
@@ -139,6 +139,13 @@ def get_args():
     parser.add_argument(
         "--user",
         help="user to view filesystem as. Defaults to the one set in .bashrc")
+    parser.add_argument(
+        "--protocol",
+        "-P",
+        nargs="?",
+        action="store",
+        default=None,
+        help="Overwrite the gfal protocol")
 
     args = parser.parse_args()
     if args.long:

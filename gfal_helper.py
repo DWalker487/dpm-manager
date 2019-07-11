@@ -13,7 +13,6 @@ import string
 import subprocess as sp
 import sys
 
-
 default_user = config.default_user
 file_count_reprint_no = config.file_count_reprint_no
 pcol_def = config.protocol_default
@@ -27,10 +26,8 @@ dir_colour = config.dir_colour
 exe_colour = config.exe_colour
 use_fnmatch = config.use_fnmatch
 
-
 def _wrap_str(string, colour):
     return "\033[{1}m{0}\033[0m".format(string, colour)
-
 
 class DPMFile():
     def __init__(self, line, directory):
@@ -55,7 +52,6 @@ class DPMFile():
     def full_name(self):
         return os.path.join(self.directory, self.fname)
 
-
     def return_line_as_str(self, args):
         ln = self.__split
 
@@ -64,7 +60,6 @@ class DPMFile():
                 self.fname_print = _wrap_str(self.fname, dir_colour)
             elif "x" in self.permissions:
                 self.fname_print = _wrap_str(self.fname, exe_colour)
-
 
         retstr = ""
 
@@ -84,7 +79,6 @@ class DPMFile():
         ln = self.__split
         return "{6:4e5} {0} {1} {4} {5:17} No. files: {2:7}  {3}".format(self.time, ln[1], ln[0],*ln[-4:])
 
-
 def bash_call(*args, **kwargs):
     child = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE,
                      **kwargs)
@@ -95,10 +89,8 @@ def bash_call(*args, **kwargs):
     return [f.decode('utf-8') for f in streamdata
             if f != b""]
 
-
 def get_usable_threads(no_threads, no_files):
     return max(min(no_threads, no_files), 1)
-
 
 def copy_file_to_grid(infile, griddir, file_no, no_files):
     infile_loc, infile_name = os.path.split(infile)
@@ -110,7 +102,6 @@ def copy_file_to_grid(infile, griddir, file_no, no_files):
                                                 file_no+1, no_files))
     bash_call("gfal-copy", filename, lcgname)
 
-
 def delete_file_from_grid(xfile, file_no, no_files):
     lcgname = xfile.full_name().replace(pcol_def, pcol_rm, 1)
 
@@ -121,10 +112,8 @@ def delete_file_from_grid(xfile, file_no, no_files):
     else:
         retval = bash_call("gfal-rm", lcgname)
 
-
 def copy_DPM_file_to_local(DPMfile, localfile):
     bash_call("gfal-copy", DPMfile, localfile)
-
 
 def copy_to_dir(infile, args, file_no, no_files):
     lcgname = infile.full_name().replace(pcol_def, pcol_down, 1)
@@ -135,7 +124,6 @@ def copy_to_dir(infile, args, file_no, no_files):
     print("Copying {0} to {1} [{2}/{3}]".format(lcgname, xfile,
                                                 file_no+1, no_files))
     copy_DPM_file_to_local(lcgname, xfile)
-
 
 def move_to_dir(infile, args, file_no, no_files):
     if infile.is_dir:  # Don't move directories for now
@@ -151,10 +139,8 @@ def move_to_dir(infile, args, file_no, no_files):
 
     bash_call("gfal-rename", oldlcgname, newlcgname)
 
-
 def create_dir(directory):
     bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM, directory ))
-
 
 def _search_match(search_str, fileobj, args):
     if args.wildcards:
@@ -174,7 +160,6 @@ def _search_match(search_str, fileobj, args):
         else:
             return search_str in fileobj.fname
 
-
 def is_excluded(fobj, args):
     if args.exclude is None:
         return False
@@ -185,18 +170,15 @@ def is_excluded(fobj, args):
                 return True
     return False
 
-
 def do_search(files, args):
     for search_str in args.search:
         files = [x for x in files if _search_match(search_str, x, args)]
     return files
 
-
 def do_reject(files, args):
     for rej_str in args.reject:
         files = [x for x in files if not _search_match(rej_str, x, args)]
     return files
-
 
 def do_copy(DPMdirectory, args, files):
     no_files = len(files)
@@ -206,7 +188,6 @@ def do_copy(DPMdirectory, args, files):
     pool.starmap(copy_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
                                   itertools.repeat(no_files)), chunksize=1)
-
 
 def do_move(DPMdirectory, args, files):
     try:
@@ -223,7 +204,6 @@ def do_move(DPMdirectory, args, files):
                                   range(len(files)),
                                   itertools.repeat(no_files)), chunksize=1)
 
-
 def do_delete(DPMdirectory, files, args):
     no_files = len(files)
     query_str = "Do you really want to delete {1} {0} file{2} [y/n]?\n".format(
@@ -239,18 +219,15 @@ def do_delete(DPMdirectory, files, args):
                                                 itertools.repeat(no_files)),
                      chunksize=1)
 
-
 def get_yes_no(string):
     if string.lower().startswith("y"):
         return True
     return False
 
-
 def get_unique_runcards(files):
     remove_digits = str.maketrans('', '', string.digits)
     return list(set(f.fname.translate(remove_digits).replace("-.", "-SEED.")
                     for f in files if not f.is_dir))
-
 
 def lfc_ls_obj_wrapper(*args):
     if len(args) == 0:
@@ -265,10 +242,8 @@ def lfc_ls_obj_wrapper(*args):
             for x in files ]
     return ret_files
 
-
 def print_files(files, args):
     print("\n".join(i.return_line_as_str(args) for i in files))
-
 
 def print_bare_files(files, args, dir):
     # TODO make this more elegant
@@ -278,7 +253,6 @@ def print_bare_files(files, args, dir):
             ret = i.return_line_as_str(args).split()
             printstr.append(" ".join(ret[:-1]+[os.path.join(dir, ret[-1])]))
     print("\n".join(printstr))
-
 
 def sort_files(files, args):
     if not args.sort:
@@ -291,12 +265,10 @@ def sort_files(files, args):
         files.sort(key=lambda f : getattr(f,sortattr), reverse = args.reverse)
         return files
 
-
 def make_directory(args):
     for directory in args.directories:
         lcgname = os.path.join(DPM.replace("gsiftp", config.protocol_default), directory)
         bash_call("gfal-mkdir", lcgname)
-
 
 def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None):
     files = lfc_ls_obj_wrapper(DPMdirectory)
@@ -352,7 +324,6 @@ def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None
     if args.delete:
         do_delete(DPMdirectory, files, args)
 
-
 def do_copy_to_grid(args):
     if args.output_directory is not None:
         output = args.output_directory
@@ -363,9 +334,16 @@ def do_copy_to_grid(args):
     for file_no, xfile in enumerate(args.copy_to_grid):
         copy_file_to_grid(xfile, output, file_no, no_files)
 
-
 if __name__ == "__main__":
     args = lscp_args.get_args()
+
+    if args.protocol is not None:
+        pcol_ls   = args.protocol
+        pcol_rm   = args.protocol
+        pcol_down = args.protocol
+        pcol_up   = args.protocol
+        pcol_mv   = args.protocol
+
     if args.user:
         DPM = DPM.format(args.user)
     else:
