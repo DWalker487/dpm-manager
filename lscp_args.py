@@ -51,7 +51,6 @@ def get_args():
         nargs="+", default=None)
     parser.add_argument(
         "--delete",
-        "-d",
         "-rm",
         help="Delete selected files",
         action="store_true", default=False)
@@ -113,6 +112,11 @@ def get_args():
         "--verbose",
         "-v",
         help="Gives extra output for lfc-ls calls",
+        action="store_true")
+    parser.add_argument(
+        "--debug",
+        "-d",
+        help="Gives debug output",
         action="store_true")
     parser.add_argument(
         "--sort",

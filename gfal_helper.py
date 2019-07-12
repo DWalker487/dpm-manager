@@ -26,9 +26,20 @@ DPM = pcol_def+config.DPM
 dir_colour = config.dir_colour
 exe_colour = config.exe_colour
 use_fnmatch = config.use_fnmatch
+debug = False
 
 def _wrap_str(string, colour):
     return "\033[{1}m{0}\033[0m".format(string, colour)
+
+def debug_print(string):
+    if string.strip() == "":
+        return
+    print("{0} {1}".format(_wrap_str("DEBUG:", 36), string))
+
+def error_print(string):
+    if string.strip() == "":
+        return
+    print("{0} {1}".format(_wrap_str("ERROR:", 31), string), file=sys.stderr)
 
 class DPMFile():
     def __init__(self, line, directory):
@@ -81,13 +92,24 @@ class DPMFile():
         return "{6:4e5} {0} {1} {4} {5:17} No. files: {2:7}  {3}".format(self.time, ln[1], ln[0],*ln[-4:])
 
 def bash_call(*args, **kwargs):
+    if debug:
+        debug_print("<call> "+" ".join(args))
     child = sp.Popen(args, stdout=sp.PIPE, stderr=sp.PIPE,
                      **kwargs)
-    streamdata = child.communicate()[0].split(b"\n")
+    stdout, stderr = [i.split(b"\n") for i in child.communicate()]
 
+    if debug:
+        for i in stdout:
+            debug_print(i.decode("utf-8"))
+            
     if child.returncode != 0:
-        print("ERROR: call {0} failed with non-zero error code {1}".format(" ".join(args), child.returncode), file=sys.stderr)
-    return [f.decode('utf-8') for f in streamdata
+        error_print("call {0} failed with non-zero error code {1}".format(" ".join(args), child.returncode))
+        error_print(" ".join(i.decode("utf-8") for i in stderr))
+    elif debug:
+        for i in stderr:
+            debug_print(i.decode("utf-8"))
+
+    return [f.decode('utf-8') for f in stdout
             if f != b""]
 
 def get_usable_threads(no_threads, no_files):
@@ -194,7 +216,7 @@ def do_move(DPMdirectory, args, files):
     try:
         assert len(args.directories) == 2
     except AssertionError as e:
-        print("Cannot perform move of files between directories. {0} specified".format(len(args.directories)))
+        error_print("Cannot perform move of files between directories. {0} specified".format(len(args.directories)))
         return
     no_files = len(files)
     print("> Moving {0} file{1}...".format(no_files,
@@ -328,7 +350,7 @@ def do_copy_to_grid(args):
     if args.output_directory is not None:
         output = args.output_directory
     else:
-        print("Please specify an output directory with -o.")
+        error_print("Please specify an output directory with -o.")
         return
     no_files = len(args.copy_to_grid)
     for file_no, xfile in enumerate(args.copy_to_grid):
@@ -336,6 +358,7 @@ def do_copy_to_grid(args):
 
 if __name__ == "__main__":
     args = lscp_args.get_args()
+    debug = args.debug
 
     if args.protocol is not None:
         pcol_ls   = args.protocol
