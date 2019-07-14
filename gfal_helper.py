@@ -112,10 +112,21 @@ def bash_call(*args, **kwargs):
     return [f.decode('utf-8') for f in stdout
             if f != b""]
 
+def get_extra_args(args):
+    extra_args = []
+    if args.parent:
+        extra_args.append("-p")
+    if args.force:
+        extra_args.append("-f")
+    if args.timeout is not None:
+        for i in ["-t", str(args.timeout), "-T", str(args.timeout)]:
+            extra_args.append(i)
+    return extra_args
+
 def get_usable_threads(no_threads, no_files):
     return max(min(no_threads, no_files), 1)
 
-def copy_file_to_grid(infile, griddir, file_no, no_files):
+def copy_file_to_grid(infile, griddir, file_no, no_files, args):
     infile_loc, infile_name = os.path.split(infile)
     infile = os.path.join(os.getcwd(), infile)
     lcgname = os.path.join(DPM.replace(pcol_def, pcol_up, 1), griddir, infile_name)
@@ -123,7 +134,10 @@ def copy_file_to_grid(infile, griddir, file_no, no_files):
     filename = "file://{0}".format(infile)
     print("Copying {0} to {1} [{2}/{3}]".format(filename, lcgname,
                                                 file_no+1, no_files))
-    bash_call("gfal-copy", filename, lcgname)
+
+    extra_args = get_extra_args(args)
+
+    bash_call("gfal-copy", filename, lcgname, *extra_args)
 
 def delete_file_from_grid(xfile, file_no, no_files):
     lcgname = xfile.full_name().replace(pcol_def, pcol_rm, 1)
@@ -135,7 +149,8 @@ def delete_file_from_grid(xfile, file_no, no_files):
     else:
         retval = bash_call("gfal-rm", lcgname)
 
-def copy_DPM_file_to_local(DPMfile, localfile):
+def copy_DPM_file_to_local(DPMfile, localfile, args):
+    extra_args = get_extra_args(args)
     bash_call("gfal-copy", DPMfile, localfile)
 
 def copy_to_dir(infile, args, file_no, no_files):
@@ -146,7 +161,7 @@ def copy_to_dir(infile, args, file_no, no_files):
         xfile = os.path.join(os.getcwd(), infile.fname)
     print("Copying {0} to {1} [{2}/{3}]".format(lcgname, xfile,
                                                 file_no+1, no_files))
-    copy_DPM_file_to_local(lcgname, xfile)
+    copy_DPM_file_to_local(lcgname, xfile, args)
 
 def move_to_dir(infile, args, file_no, no_files):
     if infile.is_dir:  # Don't move directories for now
@@ -292,7 +307,7 @@ def make_directory(args):
     for directory in args.directories:
         create_dir(directory)
 
-def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None):
+def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None, dir_only=False):
     files = lfc_ls_obj_wrapper(DPMdirectory)
 
     if recursive:
@@ -300,13 +315,17 @@ def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None
             if f.is_dir:
                 if not is_excluded(f, args):
                     parse_directory(os.path.join(DPMdirectory, f.fname), recursive=recursive,
-                                    bare=bare, exclude_dirs=exclude_dirs)
+                                    bare=bare, exclude_dirs=exclude_dirs, dir_only=dir_only)
 
     files = sort_files(files, args)
     if args.search is not None:
         files = do_search(files, args)
     if args.reject is not None:
         files = do_reject(files, args)
+    if dir_only:
+        files = [i for i in files if i.is_dir]
+
+
     no_files = len([f for f in files if not f.is_dir])
     no_dirs = len([f for f in files if f.is_dir])
     something_found = no_files+no_dirs > 0
@@ -354,7 +373,7 @@ def do_copy_to_grid(args):
         return
     no_files = len(args.copy_to_grid)
     for file_no, xfile in enumerate(args.copy_to_grid):
-        copy_file_to_grid(xfile, output, file_no, no_files)
+        copy_file_to_grid(xfile, output, file_no, no_files, args)
 
 if __name__ == "__main__":
     args = lscp_args.get_args()
@@ -384,15 +403,16 @@ if __name__ == "__main__":
 
     elif args.directories == []:
         parse_directory("", recursive = args.recursive, bare=args.bare,
-                        exclude_dirs = args.exclude)
+                        exclude_dirs = args.exclude, dir_only=args.dir)
     else:
         if not args.move:
             for DPMdirectory in args.directories:
                 parse_directory(DPMdirectory, recursive = args.recursive,
-                                bare=args.bare, exclude_dirs=args.exclude)
+                                bare=args.bare, exclude_dirs=args.exclude, 
+                                dir_only=args.dir)
         else:
             for DPMdirectory in args.directories[:1]:
-                parse_directory(DPMdirectory, bare=args.bare)
+                parse_directory(DPMdirectory, bare=args.bare, dir_only=args.dir)
 
     if args.time:
         end_time = datetime.datetime.now()

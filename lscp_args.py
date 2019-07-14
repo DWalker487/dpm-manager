@@ -44,6 +44,10 @@ def get_args():
         help="recursive search",
         action = "store_true")
     parser.add_argument(
+        "--dir",
+        help="Match only directories",
+        action = "store_true")
+    parser.add_argument(
         "--exclude",
         "--exclude-dirs",
         "-e",
@@ -98,6 +102,13 @@ def get_args():
         default= thread_count,
         type=int)
     parser.add_argument(
+        "--timeout",
+        help="timeout in seconds",
+        action="store",
+        nargs="?",
+        default=None,
+        type=int)
+    parser.add_argument(
         "--unique_runcards",
         "-u",
         help="""only display unique runcards [WIP].
@@ -107,6 +118,15 @@ def get_args():
         "--permissions",
         "-p",
         help="display permissions for files",
+        action="store_true")
+    parser.add_argument(
+        "--parent",
+        help="create parent directory with copy",
+        action="store_true")
+    parser.add_argument(
+        "--force",
+        "-f",
+        help="Force copy - overwrite any file already present",
         action="store_true")
     parser.add_argument(
         "--verbose",
