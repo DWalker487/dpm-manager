@@ -288,9 +288,12 @@ def gfal_ls_obj_wrapper(*args):
     return ret_files
 
 def print_files(files, args):
-    print("\n".join(i.return_line_as_str(args) for i in files))
+    if not args.summary:
+        print("\n".join(i.return_line_as_str(args) for i in files))
 
 def print_bare_files(files, args, dir):
+    if args.summary:
+        return
     # TODO make this more elegant
     printstr = []
     for i in files:

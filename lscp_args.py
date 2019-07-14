@@ -155,6 +155,11 @@ def get_args():
         action="store_true",
         default=False)
     parser.add_argument(
+        "--summary",
+        help="Only print summary of contents, not each individual file",
+        action="store_true",
+        default=False)
+    parser.add_argument(
         "--copy_to_grid",
         "-cpg",
         nargs="+",
