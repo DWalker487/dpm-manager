@@ -114,13 +114,17 @@ def bash_call(*args, **kwargs):
 
 def get_extra_args(args):
     extra_args = []
-    if args.parent:
-        extra_args.append("-p")
-    if args.force:
-        extra_args.append("-f")
+    if args.debug:
+        extra_args.append("-vvv")        
     if args.timeout is not None:
         for i in ["-t", str(args.timeout), "-T", str(args.timeout)]:
             extra_args.append(i)
+
+    if args.copy or args.copy_to_grid:
+        if args.parent:
+            extra_args.append("-p")
+        if args.force:
+            extra_args.append("-f")
     return extra_args
 
 def get_usable_threads(no_threads, no_files):
@@ -139,19 +143,20 @@ def copy_file_to_grid(infile, griddir, file_no, no_files, args):
 
     bash_call("gfal-copy", filename, lcgname, *extra_args)
 
-def delete_file_from_grid(xfile, file_no, no_files):
+def delete_file_from_grid(xfile, file_no, no_files, args):
     lcgname = xfile.full_name().replace(pcol_def, pcol_rm, 1)
 
     print("Deleting {0} [{1}/{2}]".format(lcgname, file_no+1, no_files))
+    extra_args = get_extra_args(args)
 
     if xfile.is_dir:
-        retval = bash_call("gfal-rm", lcgname, "-r")
-    else:
-        retval = bash_call("gfal-rm", lcgname)
+        extra_args.append("-r")
+
+    retval = bash_call("gfal-rm", lcgname, *extra_args)
 
 def copy_DPM_file_to_local(DPMfile, localfile, args):
     extra_args = get_extra_args(args)
-    bash_call("gfal-copy", DPMfile, localfile)
+    bash_call("gfal-copy", DPMfile, localfile, *extra_args)
 
 def copy_to_dir(infile, args, file_no, no_files):
     lcgname = infile.full_name().replace(pcol_def, pcol_down, 1)
@@ -174,11 +179,12 @@ def move_to_dir(infile, args, file_no, no_files):
     outfile_dir = os.path.join(_to, infile.fname)
     print("Moving {0} from {1} to {2} [{3}/{4}]".format(infile.fname, _from, _to,
                                                 file_no+1, no_files))
-
-    bash_call("gfal-rename", oldlcgname, newlcgname)
+    extra_args = get_extra_args(args)
+    bash_call("gfal-rename", oldlcgname, newlcgname, *extra_args)
 
 def create_dir(directory):
-    bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM.replace(pcol_def, pcol_mkdir, 1), directory ))
+    extra_args = get_extra_args(args)
+    bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM.replace(pcol_def, pcol_mkdir, 1), directory), *extra_args)
 
 def _search_match(search_str, fileobj, args):
     if args.wildcards:
@@ -236,7 +242,7 @@ def do_move(DPMdirectory, args, files):
     no_files = len(files)
     print("> Moving {0} file{1}...".format(no_files,
                                             ("" if no_files == 1 else "s")))
-    create_dir(args.directories[1])
+    create_dir(args.directories[1], args)
     pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
     pool.starmap(move_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
@@ -254,7 +260,8 @@ def do_delete(DPMdirectory, files, args):
         pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
         pool.starmap(delete_file_from_grid, zip(files,
                                                 range(len(files)),
-                                                itertools.repeat(no_files)),
+                                                itertools.repeat(no_files), 
+                                                itertools.repeat(args)),
                      chunksize=1)
 
 def get_yes_no(string):
@@ -267,7 +274,7 @@ def get_unique_runcards(files):
     return list(set(f.fname.translate(remove_digits).replace("-.", "-SEED.")
                     for f in files if not f.is_dir))
 
-def lfc_ls_obj_wrapper(*args):
+def gfal_ls_obj_wrapper(*args):
     if len(args) == 0:
         args = [""]
     ret_files = []
@@ -305,10 +312,10 @@ def sort_files(files, args):
 
 def make_directory(args):
     for directory in args.directories:
-        create_dir(directory)
+        create_dir(directory, args)
 
 def parse_directory(DPMdirectory, recursive=False, bare=False, exclude_dirs=None, dir_only=False):
-    files = lfc_ls_obj_wrapper(DPMdirectory)
+    files = gfal_ls_obj_wrapper(DPMdirectory)
 
     if recursive:
         for f in files:
