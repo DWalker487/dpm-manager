@@ -101,7 +101,7 @@ def bash_call(*args, **kwargs):
     if debug:
         for i in stdout:
             debug_print(i.decode("utf-8"))
-            
+
     if child.returncode != 0:
         error_print("call {0} failed with non-zero error code {1}".format(" ".join(args), child.returncode))
         error_print(" ".join(i.decode("utf-8") for i in stderr))
@@ -115,7 +115,7 @@ def bash_call(*args, **kwargs):
 def get_extra_args(args):
     extra_args = []
     if args.debug:
-        extra_args.append("-vvv")        
+        extra_args.append("-vvv")
     if args.timeout is not None:
         for i in ["-t", str(args.timeout), "-T", str(args.timeout)]:
             extra_args.append(i)
@@ -242,7 +242,7 @@ def do_move(DPMdirectory, args, files):
     no_files = len(files)
     print("> Moving {0} file{1}...".format(no_files,
                                             ("" if no_files == 1 else "s")))
-    create_dir(args.directories[1], args)
+    create_dir(args.directories[1])
     pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
     pool.starmap(move_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
@@ -260,7 +260,7 @@ def do_delete(DPMdirectory, files, args):
         pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
         pool.starmap(delete_file_from_grid, zip(files,
                                                 range(len(files)),
-                                                itertools.repeat(no_files), 
+                                                itertools.repeat(no_files),
                                                 itertools.repeat(args)),
                      chunksize=1)
 
@@ -418,7 +418,7 @@ if __name__ == "__main__":
         if not args.move:
             for DPMdirectory in args.directories:
                 parse_directory(DPMdirectory, recursive = args.recursive,
-                                bare=args.bare, exclude_dirs=args.exclude, 
+                                bare=args.bare, exclude_dirs=args.exclude,
                                 dir_only=args.dir)
         else:
             for DPMdirectory in args.directories[:1]:
