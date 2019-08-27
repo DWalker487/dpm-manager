@@ -182,7 +182,7 @@ def move_to_dir(infile, args, file_no, no_files):
     extra_args = get_extra_args(args)
     bash_call("gfal-rename", oldlcgname, newlcgname, *extra_args)
 
-def create_dir(directory):
+def create_dir(directory, args):
     extra_args = get_extra_args(args)
     bash_call("gfal-mkdir", "-p", "{0}{1}".format( DPM.replace(pcol_def, pcol_mkdir, 1), directory), *extra_args)
 
@@ -242,7 +242,7 @@ def do_move(DPMdirectory, args, files):
     no_files = len(files)
     print("> Moving {0} file{1}...".format(no_files,
                                             ("" if no_files == 1 else "s")))
-    create_dir(args.directories[1])
+    create_dir(args.directories[1], args)
     pool = mp.Pool(processes=get_usable_threads(args.no_threads, no_files))
     pool.starmap(move_to_dir, zip(files, itertools.repeat(args),
                                   range(len(files)),
