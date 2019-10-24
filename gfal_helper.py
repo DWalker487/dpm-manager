@@ -61,8 +61,14 @@ class DPMFile():
         else:
             self.is_dir = False
 
-    def full_name(self):
-        return os.path.join(self.directory, self.fname)
+    def full_name(self, protocol=pcol_def):
+        return os.path.join(self.dir(protocol), self.file())
+
+    def dir(self, protocol=pcol_def):
+        return self.directory.replace(pcol_def, protocol, 1)
+
+    def file(self):
+        return self.fname
 
     def return_line_as_str(self, args):
         ln = self.__split
@@ -144,7 +150,7 @@ def copy_file_to_grid(infile, griddir, file_no, no_files, args):
     bash_call("gfal-copy", filename, lcgname, *extra_args)
 
 def delete_file_from_grid(xfile, file_no, no_files, args):
-    lcgname = xfile.full_name().replace(pcol_def, pcol_rm, 1)
+    lcgname = xfile.full_name(pcol_rm)
 
     print("Deleting {0} [{1}/{2}]".format(lcgname, file_no+1, no_files))
     extra_args = get_extra_args(args)
@@ -159,7 +165,7 @@ def copy_DPM_file_to_local(DPMfile, localfile, args):
     bash_call("gfal-copy", DPMfile, localfile, *extra_args)
 
 def copy_to_dir(infile, args, file_no, no_files):
-    lcgname = infile.full_name().replace(pcol_def, pcol_down, 1)
+    lcgname = infile.full_name(pcol_down)
     if args.output_directory is not None:
         xfile = os.path.join(args.output_directory, infile.fname)
     else:
@@ -172,8 +178,9 @@ def move_to_dir(infile, args, file_no, no_files):
     if infile.is_dir:  # Don't move directories for now
         return
     _from, _to = args.directories
-    oldlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _from, infile.fname)
-    newlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _to, infile.fname)
+    oldlcgname = infile.full_name(pcol_mv)
+    newlcgname = "{0}{1}".format( DPM.replace(pcol_def, pcol_mv, 1),
+                                    os.path.join(_to, infile.fname) )
 
     infile_dir = os.path.join(_from, infile.fname)
     outfile_dir = os.path.join(_to, infile.fname)
