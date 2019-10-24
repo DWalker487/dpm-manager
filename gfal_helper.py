@@ -178,8 +178,9 @@ def move_to_dir(infile, args, file_no, no_files):
     if infile.is_dir:  # Don't move directories for now
         return
     _from, _to = args.directories
-    oldlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _from, infile.fname)
-    newlcgname = "{0}{1}/{2}".format(DPM.replace(pcol_def, pcol_mv, 1), _to, infile.fname)
+    oldlcgname = infile.full_name(pcol_mv)
+    newlcgname = "{0}{1}".format( DPM.replace(pcol_def, pcol_mv, 1),
+                                    os.path.join(_to, infile.fname) )
 
     infile_dir = os.path.join(_from, infile.fname)
     outfile_dir = os.path.join(_to, infile.fname)
