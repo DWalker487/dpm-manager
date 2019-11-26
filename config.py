@@ -11,7 +11,7 @@ DPM = "://se01.dur.scotgrid.ac.uk/dpm/dur.scotgrid.ac.uk/home/pheno/{0}/"
 ## not supported by gfal:
 # sftp, mock
 protocol_default = "gsiftp"
-protocol_list = "dav"
+protocol_list = "davs"
 protocol_delete = "xroot"
 protocol_download = "xroot"
 protocol_upload = "xroot"
